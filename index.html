@@ -4,6 +4,24 @@
   <body>
     <canvas id="snow" style="width=1000px;height=800px"></canvas>
 
-    <script type='text/javascript' src='snow.js'></script>
+    <script type='text/javascript' src='utils.js'></script>
+    <script type='text/javascript' src='snow_namespace.js'></script>
+    <script type='text/javascript' src='fallen_flake_tracker.js'></script>
+    <script type='text/javascript' src='snow_flake.js'></script>
+    <script type='text/javascript' src='flake_renderer.js'></script>
+    <script type='text/javascript' src='debugger.js'></script>
+    <script type='text/javascript' src='toggler.js'></script>
+    <script type='text/javascript' src='wind.js'></script>
+    <script type='text/javascript' src='snow_renderer.js'></script>
+    <script type='text/javascript'>
+      var debugger = new Debugger(),
+          pauser   = new Toggler()
+          // wind     = new Wind()
+
+      var renderer = new Snow.Renderer(document.getElementById('snow'), 1000, 800, { debugger: debugger, toggler: pauser })
+
+      // 33 = approx 1000 / 30 to get our FPS
+      renderer.animateScreen(33)
+    </script>
   </body>
 </html>
