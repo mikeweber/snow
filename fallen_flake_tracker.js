@@ -1,52 +1,104 @@
 window.Snow.FallenFlakeTracker = (function() {
-  function FallenFlakeTracker() {
-    this.fallen_flakes = {}
+  function FallenFlakeTracker(canvas_width, canvas_height) {
+    this.flakes_by_x = {}
+    this.flakes_by_y = {}
     this.length = 0
-    this.min_height = canvas.height
-    this.max_height = canvas.height
+    this.canvas_width  = canvas_width
+    this.canvas_height = canvas_height
+    this.min_height    = canvas_height
+    this.max_height    = canvas_height
   }
 
   (function(klass) {
-    klass.prototype.getMinHeight = function() {
-      return Array.max(this.getMinHeights())
+    klass.stickiness = 2
+
+    klass.prototype.snowCover = function() {
+      return this.min_height - klass.stickiness
     }
 
-    klass.prototype.getMinHeights = function() {
-      var heights = []
-      for (var key in this.fallen_flakes) {
-        heights.push(this.fallen_flakes.min_height)
-      }
-      return heights
-    }
+    klass.prototype.prune = function(flake_renderer) {
+      var flake   = flake_renderer.flake,
+          key_x   = Math.floor(flake.x),
+          key_y   = Math.floor(flake.top()),
+          index_x = this.flakes_by_x[key_x].flakes.indexOf(flake_renderer),
+          index_y = this.flakes_by_y[key_y].flakes.indexOf(flake_renderer)
 
-    klass.prototype.prune = function(flake) {
-      var key = Math.floor(flake.x),
-          index = this.fallen_flakes[key].flakes.indexOf(flake)
-
-      this.fallen_flakes[key].flakes.splice(index, 1)
+      this.flakes_by_x[key_x].flakes.splice(index_x, 1)
+      this.flakes_by_y[key_y].flakes.splice(index_y, 1)
       this.length--
     }
 
-    klass.prototype.addFlake = function(flake) {
+    klass.prototype.addFlake = function(flake_renderer) {
       this.length++
-      var index = Math.floor(flake.x)
-      if (!this.fallen_flakes[index]) this.fallen_flakes[index] = { flakes: [], min_height: canvas.height }
-      this.fallen_flakes[index].flakes.push(flake)
-      if (flake.y < this.fallen_flakes[index].min_height) this.fallen_flakes[index].min_height = flake.y
-      if (flake.y < this.min_height) this.setMinHeight(flake.y)
+      var flake   = flake_renderer.flake,
+          index_x = Math.floor(flake.x),
+          index_y = Math.floor(flake.top())
+
+      this.addFlakeToX(index_x, flake_renderer)
+      this.addFlakeToY(index_y, flake_renderer)
+
+      if (index_y < this.min_height) {
+        this.setMinHeight(index_y)
+      }
+      if (index_y > this.max_height && this.isRowFull(index_y)) {
+        this.setMaxHeight(index_y)
+      }
+    }
+
+    klass.prototype.addFlakeToX = function(x, flake_renderer) {
+      this.initializeFlakesByX(x)
+      this.flakes_by_x[x].flakes.push(flake_renderer)
+      if (flake_renderer.flake.top() < this.flakes_by_x[x].min_height) this.flakes_by_x[x].min_height = flake_renderer.flake.top()
+    }
+
+    klass.prototype.initializeFlakesByX = function(x) {
+      if (!this.flakes_by_x[x]) this.flakes_by_x[x] = { flakes: [], min_height: this.canvas_height }
+    }
+
+    klass.prototype.addFlakeToY = function(x, y, flake_renderer) {
+      this.initializeFlakesByY(y)
+      if (!this.flakes_by_y[y].flakes[x] || this.flakes_by_y[y].flakes[x].flake.radius() < flake_renderer.flake.radius()) {
+        // if a flake exists near the same x and y coords, keep the larger one
+        if (this.flakes_by_y[y].flakes[x]) this.prune(this.flakes_by_y[y].flakes[x])
+        this.flakes_by_y[y].flakes[x] = flake_renderer
+      }
+    }
+
+    klass.prototype.initializeFlakesByY = function(y) {
+      if (!this.flakes_by_y[y]) this.flakes_by_y[y] = { flakes: [], min_height: this.canvas_height }
     }
 
     klass.prototype.setMinHeight = function(new_min) {
       this.min_height = new_min
+    }
+
+    klass.prototype.setMaxHeight = function(new_max) {
+      this.max_height = new_max
       this.pruneHiddenFlakes()
     }
 
+    klass.prototype.isRowFull = function(y) {
+      return this.flakes_by_y(y).flakes.length >= this.canvas_width
+    }
+
     klass.prototype.pruneHiddenFlakes = function() {
-      for (var key in this.fallen_flakes) {
-        var nearby_flakes = this.get(key)
-        for (var i = 0; i < nearby_flakes.length; i++) {
-          var flake = nearby_flakes[i]
-          if (this.isFlakeHidden(flake)) this.prune(flake)
+      // Prune flakes beneath the snow cover
+      for (var key in this.flakes_by_y) {
+        if (key >= this.max_height) {
+          var flakes_to_remove = this.flakes_by_y[key].flakes
+          for (var i = 0; i < flakes_to_remove.length; i++) {
+            this.prune(flakes_to_remove[key].flakes[i])
+          }
+        }
+      }
+
+      // Prune flakes off the screen
+      for (var key in this.flakes_by_x) {
+        if (key < 0 || this.canvas_width < key) {
+          var flakes_to_remove = this.flakes_by_x[key].flakes
+          for (var i = 0; i < flakes_to_remove.length; i++) {
+            this.prune(flakes_to_remove[key].flakes[i])
+          }
         }
       }
     }
@@ -66,12 +118,13 @@ window.Snow.FallenFlakeTracker = (function() {
     }
 
     klass.prototype.get = function(i) {
-      return this.fallen_flakes[i].flakes
+      if (!this.flakes_by_x[i]) return []
+      return this.flakes_by_x[i].flakes || []
     }
 
     klass.prototype.getAll = function() {
       var flakes = []
-      for (var key in this.fallen_flakes) {
+      for (var key in this.flakes_by_x) {
         var local_flakes = this.get(key)
         for (var i = 0; i < local_flakes.length; i++) {
           flakes.push(local_flakes[i])

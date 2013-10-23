@@ -8,26 +8,29 @@ window.Snow.SnowFlake = (function() {
   }
 
   (function(klass) {
-    klass.stickiness = 2
-
-    klass.prototype.step = function(dt, wind) {
+    klass.prototype.step = function(fallen_flakes, dt, wind) {
       if (this.is_fallen) return
-      if (this.detectCollision() || this.y >= canvas.height) {
+      if (this.detectCollision(fallen_flakes) || this.y >= fallen_flakes.snowCover()) {
+        this.is_fallen = true
         return true
       }
-      this.y += 1 * this.z * dt * 0.1
-      this.float += Math.PI * dt * 0.01
+      this.y += 1 * this.z * dt * 100
+      this.float += Math.PI * dt
       if (wind) this.x += wind.direction * this.z * dt * 0.1
       this.x += Math.sin(this.float) * this.z * 0.2
+    }
+
+    klass.prototype.top = function() {
+      return this.y - this.radius()
     }
 
     klass.prototype.radius = function() {
       return this.z
     }
 
-    klass.prototype.detectCollision = function(fallen_flakes, stickiness) {
+    klass.prototype.detectCollision = function(fallen_flakes) {
       // If the flake is nowhere near the ground, don't bother with calculations
-      if (this.y < fallen_flakes.getMinHeight() - stickiness) return false
+      if (this.y < fallen_flakes.snowCover() - 1) return false
 
       var collided = false
       var nearby_flakes = fallen_flakes.nearbyFlakes(this.x)
@@ -37,12 +40,11 @@ window.Snow.SnowFlake = (function() {
         if (flake !== this) {
           var dx = this.x - flake.x,
               dy = this.y - flake.y,
-              radii = stickiness
+              radii = fallen_flakes.stickiness
 
-          if (dx < stickiness && (dx * dx) + (dy * dy) < (radii * radii)) collided = true
+          if (dx < fallen_flakes.stickiness && (dx * dx) + (dy * dy) < (radii * radii)) collided = true
         }
       }
-      this.is_fallen = collided
 
       return collided
     }

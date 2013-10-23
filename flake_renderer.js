@@ -10,8 +10,8 @@ window.Snow.SnowFlakeRenderer = (function() {
     klass.prototype.render = function() {
       this.ctx.beginPath()
       this.ctx.arc(this.flake.x, this.flake.y, this.flake.radius(), 0, 2 * Math.PI, false)
-      ctx.fillStyle = this.color
-      ctx.fill()
+      this.ctx.fillStyle = this.color
+      this.ctx.fill()
     }
   })(FlakeRenderer)
 

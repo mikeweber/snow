@@ -7,45 +7,45 @@ window.Snow.Renderer = (function() {
     this.canvas.height = height
     this.last_draw     = 0
     this.flakes        = []
-    this.fallen_flakes = new Snow.FallenFlakeTracker()
-    if (options.wind)  this.wind     = options.wind
-    if (options.debug) this.debugger = options.debug
+    this.fallen_flakes = new Snow.FallenFlakeTracker(this.canvas.width, this.canvas.height)
+    if (options.wind)    this.wind    = options.wind
+    if (options.debug)   this.debug   = options.debug
+    if (options.toggler) this.toggler = options.toggler
   }
 
   (function(klass) {
     klass.prototype.drawSnowFlakes = function() {
-      for (var i = 0; i < flakes.length; i++) {
-        this.drawSnowFlake(flakes[i])
+      for (var i = 0; i < this.flakes.length; i++) {
+        this.drawSnowFlake(this.flakes[i])
       }
     }
 
     klass.prototype.drawFallenFlakes = function() {
-      var flakes = fallen_flakes.getAll()
+      var flakes = this.fallen_flakes.getAll()
       for (var i = 0; i < flakes.length; i++) {
-        this.drawSnowFlake(flakes[i], '#000')
+        this.drawSnowFlake(flakes[i])
       }
       this.drawSnowCover()
     }
 
     klass.prototype.drawSnowCover = function() {
       this.ctx.fillStyle = '#FFF'
-      var min_height = this.fallen_flakes.getMinHeight()
-      this.ctx.fillRect(0, min_height, this.canvas.width, this.canvas.height - min_height)
+      var max_height = this.fallen_flakes.max_height
+      this.ctx.fillRect(0, max_height, this.canvas.width, this.canvas.height - max_height)
     }
 
     klass.prototype.drawSnowFlake = function(flake) {
       flake.render()
     }
 
-    klass.prototype.updateSnowFlakes = function() {
-      var dt = (new Date() - this.last_draw) * 0.001
-
+    klass.prototype.updateSnowFlakes = function(dt) {
       if (this.wind) this.wind.step(dt)
 
       var newly_fallen_indices = []
-      for (var i = 0; i < flakes.length; i++) {
+      for (var i = 0; i < this.flakes.length; i++) {
         // Flake#step will return true if there's a collision
-        if (flakes[i].step(dt)) newly_fallen_indices.push(i)
+        var removed = this.flakes[i].flake.step(this.fallen_flakes, dt)
+        if (removed) newly_fallen_indices.push(i)
       }
 
       // Before removing flakes, reverse the order so that removing one flake doesn't
@@ -58,23 +58,23 @@ window.Snow.Renderer = (function() {
     // Move the flakes at the passed in indices from the flakes array to the fallen_flakes tracker
     klass.prototype.markFlakesAsFallen = function(newly_fallen_indices) {
       for (i = 0; i < newly_fallen_indices.length; i++) {
-        var flake = flakes[newly_fallen_indices[i]]
+        var flake = this.flakes[newly_fallen_indices[i]]
         this.fallen_flakes.addFlake(flake)
         this.flakes.splice(this.flakes.indexOf(flake), 1)
       }
     }
 
     klass.prototype.addSnowFlakes = function(new_flake_count) {
-      for (var i = 0; i < new_flake_count; i++) addSnowFlake()
+      for (var i = 0; i < new_flake_count; i++) this.addSnowFlake()
     }
 
     klass.prototype.addSnowFlake = function() {
-      flakes.push(new Snow.SnowFlakeRenderer(this.ctx, this.generateSnowFlake()))
+      this.flakes.push(new Snow.SnowFlakeRenderer(this.ctx, this.generateSnowFlake()))
     }
 
     klass.prototype.generateSnowFlake = function() {
       // Start the snowflake somewhere on the canvas, or just off the edge of either side
-      var starting_point = (Math.random() * this.canvas.width * 1.1) - canvas.width * 0.05
+      var starting_point = (Math.random() * this.canvas.width * 1.1) - this.canvas.width * 0.05
       // Add some depth, but for performance reasons, try to keep flakes at a medium depth
       // so they are removed from the screen at about the same rate that they're added
       var depth = Math.abs(Math.rnd(2, 1))
@@ -84,22 +84,25 @@ window.Snow.Renderer = (function() {
 
     klass.prototype.animateScreen = function(frame_length) {
       this.last_draw = new Date()
-      function step() {
-        if (new Date() - this.last_draw > frame_length) {
-          this.updateSnowFlakes()
-          this.clearCanvas()
-          this.drawSnowFlakes()
-          this.drawFallenFlakes()
-          this.last_draw = new Date()
-          if (this.debug) debug.updateStats()
+      var self = this
+      function render() {
+        var dt = new Date() - self.last_draw
+
+        if (dt > frame_length) {
+          self.updateSnowFlakes(dt * 0.001)
+          self.clearCanvas()
+          self.drawSnowFlakes()
+          self.drawFallenFlakes()
+          if (self.debug) self.debug.updateStats(self)
+          self.last_draw = new Date()
         }
 
-        if (!this.toggler || this.toggler.running) requestAnimationFrame(step)
+        if (!self.toggler || self.toggler.running) requestAnimationFrame(render)
       }
-      requestAnimationFrame(step)
+      requestAnimationFrame(render)
     }
 
-    function clearCanvas() {
+    klass.prototype.clearCanvas = function() {
       this.ctx.fillStyle = '#87ceeb'
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     }
