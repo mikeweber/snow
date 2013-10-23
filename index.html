@@ -1,7 +1,14 @@
 <html>
   <head>
+    <style type="text/css" media="all">
+      #debug {
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+    </style>
   </head>
-  <body>
+  <body style="background: #AAA">
     <canvas id="snow" style="width=1000px;height=800px"></canvas>
 
     <script type='text/javascript' src='utils.js'></script>
@@ -14,14 +21,14 @@
     <script type='text/javascript' src='wind.js'></script>
     <script type='text/javascript' src='snow_renderer.js'></script>
     <script type='text/javascript'>
-      var debugger = new Debugger(),
-          pauser   = new Toggler()
+      var debug    = new Snow.SnowDebugger(),
+          pauser   = new Snow.Toggler()
           // wind     = new Wind()
 
-      var renderer = new Snow.Renderer(document.getElementById('snow'), 1000, 800, { debugger: debugger, toggler: pauser })
+      var renderer = new Snow.Renderer(document.getElementById('snow'), 1000, 800, { debug: debug, toggler: pauser })
 
-      // 33 = approx 1000 / 30 to get our FPS
-      renderer.animateScreen(33)
+      // 16 = approx 1000 / 60 to get our FPS
+      renderer.animateScreen(16)
     </script>
   </body>
 </html>
