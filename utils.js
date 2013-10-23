@@ -14,7 +14,7 @@
   }
 
   // returns the gaussian distribution centered around the 'mean' by 'stdev' standard deviations
-  Math.rnd(mean, stdev) {
+  Math.rnd = function(mean, stdev) {
     if (!mean)  mean  = 0
     if (!stdev) stdev = 1
     return Math.rnd_snd() * stdev + mean
