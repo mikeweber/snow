@@ -25,5 +25,5 @@ window.Snow.Toggler = (function() {
   })(Toggler)
 
   return Toggler
-})
+})()
 
