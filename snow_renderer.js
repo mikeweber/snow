@@ -32,8 +32,13 @@ window.Snow.Renderer = (function() {
 
     klass.prototype.drawSnowCover = function() {
       this.ctx.fillStyle = '#FFF'
-      var max_height = this.fallen_flakes.max_height
+      var max_height = this.fallen_flakes.snowCover()
       this.ctx.fillRect(0, max_height, this.canvas.width, this.canvas.height - max_height)
+      // this.ctx.beginPath()
+      // this.ctx.moveTo(0, max_height)
+      // this.ctx.lineTo(this.canvas.width, max_height)
+      // this.ctx.strokeStyle = '#222'
+      // this.ctx.stroke()
     }
 
     klass.prototype.drawSnowFlake = function(flake) {
@@ -47,21 +52,22 @@ window.Snow.Renderer = (function() {
       for (var i = 0; i < this.flakes.length; i++) {
         // Flake#step will return true if there's a collision
         var removed = this.flakes[i].flake.step(this.fallen_flakes, dt)
+        if (this.flakes[i].flake.y > this.canvas.height + 50) removed = true
         if (removed) newly_fallen_indices.push(i)
       }
 
-      // Before removing flakes, reverse the order so that removing one flake doesn't
-      // affect the removal of another flake later in the list
-      this.markFlakesAsFallen(newly_fallen_indices.reverse())
+      this.markFlakesAsFallen(newly_fallen_indices)
+      this.fallen_flakes.pruneHiddenFlakes()
 
       this.addSnowFlakes(Math.random() * 5)
     }
 
     // Move the flakes at the passed in indices from the flakes array to the fallen_flakes tracker
     klass.prototype.markFlakesAsFallen = function(newly_fallen_indices) {
-      for (i = 0; i < newly_fallen_indices.length; i++) {
-        var flake = this.flakes[newly_fallen_indices[i]]
-        this.fallen_flakes.addFlake(flake)
+      var flake_index
+      while (flake_index = newly_fallen_indices.pop()) {
+        var flake = this.flakes[flake_index]
+        // this.fallen_flakes.addFlake(flake)
         this.flakes.splice(this.flakes.indexOf(flake), 1)
       }
     }

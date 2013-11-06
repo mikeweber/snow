@@ -1,23 +1,40 @@
 window.Snow.SnowFlake = (function() {
-  function SnowFlake(x, y, z) {
+  function SnowFlake(x, y, z, options) {
+    if (!options) options = {}
     this.x = x
-    this.y = 0
+    this.y = y
     this.z = z
-    this.float = Math.PI * 2 * Math.random()
+    this.float = options.float || Math.PI * 2 * Math.random()
     this.is_fallen = false
   }
 
   (function(klass) {
     klass.prototype.step = function(fallen_flakes, dt, wind) {
       if (this.is_fallen) return
-      if (this.detectCollision(fallen_flakes) || this.y >= fallen_flakes.snowCover()) {
-        this.is_fallen = true
-        return true
-      }
-      this.y += 1 * this.z * dt * 100
+      // change float first since this is used to calculate velocityY
       this.float += Math.PI * dt
-      if (wind) this.x += wind.direction * this.z * dt * 0.1
-      this.x += Math.sin(this.float) * this.z * 0.2
+      var delta          = this.calcDelta(fallen_flakes, dt, wind),
+          fall_distance  = delta.y,
+          float_distance = delta.x
+
+      // If the flake has collided, or will collided between the last and the current frame
+      // if (delta.steps_to_snowcover < 1) {
+      //   // check to see if there is actual snow to intersect with before the "ground"
+      //   var collision_flake = this.detectCollision(fallen_flakes, dt, float_distance)
+      //   if (collision_flake.closest_flake) {
+      //     delta.steps_to_snowcover = collision_flake.collision_time
+      //   }
+
+      //   // only fall and float by the percentage of time between the previous and the current frame
+      //   fall_distance  *= delta.steps_to_snowcover
+      //   float_distance *= delta.steps_to_snowcover
+      //   this.is_fallen  = true
+      // }
+
+      this.y += fall_distance
+      this.x += float_distance
+
+      return this.is_fallen
     }
 
     klass.prototype.calcDelta = function(fallen_flakes, dt, wind) {
@@ -30,21 +47,17 @@ window.Snow.SnowFlake = (function() {
       return { x: float_distance, y: fall_distance, steps_to_snowcover : steps_to_snowcover }
     }
 
-    klass.prototype.detectCollision = function(fallen_flakes) {
-      // If the flake is nowhere near the ground, don't bother with calculations
-      if (this.y < fallen_flakes.snowCover() - 1) return false
+    klass.prototype.detectCollision = function(fallen_flakes, dt, float_distance) {
+      var earliest_collision = dt,
+          closest_flake,
+          potential_intersects = fallen_flakes.nearbyFlakes(this.x, this.x + float_distance)
 
-      var collided = false
-      var nearby_flakes = fallen_flakes.nearbyFlakes(this.x)
-
-      for (var i = 0; !collided && i < nearby_flakes.length; i++) {
-        var flake = nearby_flakes[i]
-        if (flake !== this) {
-          var dx = this.x - flake.x,
-              dy = this.y - flake.y,
-              radii = fallen_flakes.stickiness
-
-          if (dx < fallen_flakes.stickiness && (dx * dx) + (dy * dy) < (radii * radii)) collided = true
+      for (var i = 0; !closest_flake && i < potential_intersects.length; i++) {
+        var flake = potential_intersects[i].flake,
+        collision_time = this.collisionTimeWith(flake, fallen_flakes.stickiness())
+        if (collision_time < dt && collision_time < earliest_collision) {
+          earliest_collision = collision_time
+          closest_flake = flake
         }
       }
 
