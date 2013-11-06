@@ -1,15 +1,16 @@
 window.Snow.Toggler = (function() {
-  function Toggler() {
+  function Toggler(renderer) {
     this.running = true
     this.renderButton()
     this.setButtonText(this.button)
+    this.renderer = renderer
   }
 
   (function(klass) {
     klass.prototype.toggle = function(button) {
       this.running = !this.running
       this.setButtonText(button)
-      if (this.running) animateScreen()
+      if (this.running) this.renderer.animateScreen()
     }
 
     klass.prototype.setButtonText = function(button) {

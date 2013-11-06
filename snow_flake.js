@@ -20,12 +20,14 @@ window.Snow.SnowFlake = (function() {
       this.x += Math.sin(this.float) * this.z * 0.2
     }
 
-    klass.prototype.top = function() {
-      return this.y - this.radius()
-    }
+    klass.prototype.calcDelta = function(fallen_flakes, dt, wind) {
+      // next determine where it's going to fall in this frame
+      var fall_distance = this.velocityY() * dt,
+          distance_from_snow_cover = (this.y + fall_distance) - fallen_flakes.snowCover(),
+          steps_to_snowcover = (this.velocityY() - distance_from_snow_cover) / this.velocityY(),
+          float_distance = this.velocityX(wind)
 
-    klass.prototype.radius = function() {
-      return this.z
+      return { x: float_distance, y: fall_distance, steps_to_snowcover : steps_to_snowcover }
     }
 
     klass.prototype.detectCollision = function(fallen_flakes) {
@@ -46,7 +48,30 @@ window.Snow.SnowFlake = (function() {
         }
       }
 
-      return collided
+      return { closest_flake: closest_flake, collision_time: earliest_collision }
+    }
+
+    klass.prototype.collisionTimeWith = function(flake, stickiness) {
+      return (2 * -stickiness + flake.y - this.y) / this.velocityY()
+    }
+
+    klass.prototype.velocityX = function(wind) {
+      var vel_x = this.z * Math.sin(this.float) * 0.5
+      if (wind) vel_x += wind.direction
+
+      return vel_x
+    }
+
+    klass.prototype.velocityY = function() {
+      return this.z * 100
+    }
+
+    klass.prototype.top = function() {
+      return this.y - this.radius()
+    }
+
+    klass.prototype.radius = function() {
+      return this.z
     }
   })(SnowFlake)
 

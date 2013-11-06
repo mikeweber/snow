@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <style type="text/css" media="all" href="http://code.jquery.com/qunit/qunit-git.css"></style>
+    <title>Renderer specs</title>
+  </head>
+  <body>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <script type="text/javascript" charset="utf-8" src="http://code.jquery.com/qunit/qunit-1.12.0.js"></script>
+    <script type="text/javascript" charset="utf-8" src="snow_namespace.js"></script>
+    <script type="text/javascript" charset="utf-8" src="snow_flake.js"></script>
+    <script type="text/javascript" charset="utf-8" src="fallen_flake_tracker.js"></script>
+    <script type="text/javascript" charset="utf-8">
+      test("flake collides when the next stop crosses the threshold", function() {
+        var flake = new Snow.SnowFlake(0, 0, 1),
+        fallen = {
+          snowCover: function() {
+            return flake.velocityY() * 0.5
+          },
+          nearbyFlakes: function() { return [] }
+        }
+
+        ok(flake.step(fallen, 1), "Flake crossed the border")
+      })
+
+      test("flake collides when the next step lands on the threshold", function() {
+        var flake = new Snow.SnowFlake(0, 0, 1),
+        fallen = {
+          snowCover: function() {
+            return flake.velocityY() - 1
+          },
+          nearbyFlakes: function() { return [] }
+        }
+
+        ok(flake.step(fallen, 1), "Flake is at the outer limit of collision detection and will collide")
+      })
+
+      test("flake collides when the next step lands on the threshold", function() {
+        var flake = new Snow.SnowFlake(0, 0, 1),
+        fallen = {
+          snowCover: function() {
+            return flake.velocityY()
+          },
+          nearbyFlakes: function() { return [] }
+        }
+
+        ok(!flake.step(fallen, 1), "Flake is on the border and not fallen")
+      })
+
+      test("flake does not collide when the next step is before the threshold", function() {
+        var flake = new Snow.SnowFlake(0, 0, 1),
+        fallen = {
+          snowCover: function() {
+            return flake.velocityY()
+          },
+          nearbyFlakes: function() { return [] }
+        }
+
+        ok(!flake.step(fallen, 1), "Flake will not cross the border")
+      })
+
+      test("flake's y should be set to point of collision", function() {
+        var flake = new Snow.SnowFlake(0, 0, 1)
+        fallen = {
+          snowCover: function() {
+            return 25
+          },
+          nearbyFlakes: function() { return [] }
+        }
+
+        flake.step(fallen, 1)
+        equal(flake.y, 25, "Flake should only travel a percent of the fall distance")
+      })
+
+      test("flake should collide with fallen flake before the ground", function() {
+        var fallen_flakes = new Snow.FallenFlakeTracker(500, 500),
+            fallen_flake = new Snow.SnowFlake(200, 390, 1),
+            falling_flake = new Snow.SnowFlake(200, 350, 1)
+
+        fallen_flake.is_fallen = true
+        fallen_flakes.addFlake({ flake: fallen_flake })
+
+        equal(fallen_flakes.snowCover(), 398)
+        equal(fallen_flakes.length, 1, "there should be a fallen flake")
+        equal(fallen_flakes.nearbyFlakes(falling_flake.x)[0].flake, fallen_flake, "The fallen flake should be nearby")
+        ok(falling_flake.step(fallen_flakes, 1), "flake should have collided with something")
+        equal(falling_flake.y, 386, "Falling flake should collide with fallen flake")
+      })
+    </script>
+  </body>
+</html>
+
