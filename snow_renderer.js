@@ -51,7 +51,7 @@ window.Snow.Renderer = (function() {
       var newly_fallen_indices = []
       for (var i = 0; i < this.flakes.length; i++) {
         // Flake#step will return true if there's a collision
-        var removed = this.flakes[i].flake.step(this.fallen_flakes, dt)
+        var removed = this.flakes[i].flake.step(this.fallen_flakes, dt, this.wind)
         if (this.flakes[i].flake.y > this.canvas.height + 50) removed = true
         if (removed) newly_fallen_indices.push(i)
       }
@@ -92,29 +92,50 @@ window.Snow.Renderer = (function() {
 
     klass.prototype.animateScreen = function() {
       this.last_draw = new Date()
-      var self = this
 
       function render() {
         var now = new Date(),
-            dt  = now - self.last_draw
+            dt  = now - this.last_draw
 
-        if (dt > self.frame_length) {
-          self.updateSnowFlakes(dt * 0.001)
-          self.fallen_flakes.pruneHiddenFlakes()
-          self.clearCanvas()
-          self.drawSnowFlakes()
-          self.drawFallenFlakes()
-          if (self.debug) self.debug.updateStats(self)
-          self.last_draw = now
+        if (dt > this.frame_length) {
+          this.updateSnowFlakes(dt * 0.001)
+          this.fallen_flakes.pruneHiddenFlakes()
+          this.clearCanvas()
+          this.drawSnowFlakes()
+          this.drawFallenFlakes()
+          // if (this.wind) {
+          //   this.ctx.beginPath()
+          //   this.ctx.moveTo(this.wind.position, 0)
+          //   this.ctx.lineTo(this.wind.position, this.canvas.height)
+          //   this.ctx.lineWidth = 2
+          //   this.ctx.strokeStyle = '#222'
+          //   this.ctx.stroke()
+
+          //   this.ctx.beginPath()
+          //   this.ctx.moveTo(this.wind.getRight(), 0)
+          //   this.ctx.lineTo(this.wind.getRight(), this.canvas.height)
+          //   this.ctx.lineWidth = 2
+          //   this.ctx.strokeStyle = '#222'
+          //   this.ctx.stroke()
+
+          //   this.ctx.beginPath()
+          //   this.ctx.moveTo(this.wind.getRightEdge(), 0)
+          //   this.ctx.lineTo(this.wind.getRightEdge(), this.canvas.height)
+          //   this.ctx.lineWidth = 2
+          //   this.ctx.strokeStyle = '#222'
+          //   this.ctx.stroke()
+          // }
+          if (this.debug) this.debug.updateStats(this)
+          this.last_draw = now
         }
 
-        if (!self.toggler || self.toggler.running) requestAnimationFrame(render)
+        if (!this.toggler || this.toggler.running) requestAnimationFrame(render.bind(this))
       }
-      requestAnimationFrame(render)
+      requestAnimationFrame(render.bind(this))
     }
 
     klass.prototype.clearCanvas = function() {
-      this.ctx.fillStyle = '#87ceeb'
+      this.ctx.fillStyle = '#274EAB'
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     }
   })(Renderer)

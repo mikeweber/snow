@@ -4,6 +4,7 @@ window.Snow.SnowFlake = (function() {
     this.x = x
     this.y = y
     this.z = z
+    this.vel_x = 0
     this.float = options.float || Math.PI * 2 * Math.random()
     this.is_fallen = false
   }
@@ -12,7 +13,7 @@ window.Snow.SnowFlake = (function() {
     klass.prototype.step = function(fallen_flakes, dt, wind) {
       if (this.is_fallen) return
       // change float first since this is used to calculate velocityY
-      this.float += Math.PI * dt
+      this.float += Math.PI / 20 * dt
       var delta          = this.calcDelta(fallen_flakes, dt, wind),
           fall_distance  = delta.y,
           float_distance = delta.x
@@ -42,8 +43,9 @@ window.Snow.SnowFlake = (function() {
       var fall_distance = this.velocityY() * dt,
           distance_from_snow_cover = (this.y + fall_distance) - fallen_flakes.snowCover(),
           steps_to_snowcover = (this.velocityY() - distance_from_snow_cover) / this.velocityY(),
-          float_distance = this.velocityX(wind)
+          float_distance = this.stepVelocityX(dt, wind)
 
+      float_distance += this.z * Math.sin(this.float) * 0.25
       return { x: float_distance, y: fall_distance, steps_to_snowcover : steps_to_snowcover }
     }
 
@@ -68,11 +70,11 @@ window.Snow.SnowFlake = (function() {
       return (2 * -stickiness + flake.y - this.y) / this.velocityY()
     }
 
-    klass.prototype.velocityX = function(wind) {
-      var vel_x = this.z * Math.sin(this.float) * 0.5
-      if (wind) vel_x += wind.direction
+    klass.prototype.stepVelocityX = function(dt, wind) {
+      if (wind) this.vel_x += wind.getSpeed(this.x, this.z) * dt
+      this.vel_x *= 0.99
 
-      return vel_x
+      return this.vel_x
     }
 
     klass.prototype.velocityY = function() {

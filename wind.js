@@ -1,20 +1,45 @@
 window.Snow.Wind = (function() {
-  function Wind(direction) {
-    this.direction = direction
-    this.gust_burst = 0
+  var klass = function Wind(position, speed, window_width) {
+    this.position = position
+    this.speed = speed
+    this.window_width = window_width
+    this.width = 600
+    this.edge_width = 200
   }
 
-  Wind.prototype.step = function(dt) {
-    if (Math.abs(this.gust_burst - this.direction) > 2) {
-      this.direction = this.direction + this.gust_burst * 0.01 * dt
-    }
-    // There's a 0.05 chance of a change in wind
-    if (Math.random() < 0.05) {
-      // If there is a change in wind, the speed and direction should center around 0
-      this.gust_burst = Math.rnd(0, 10)
-    }
+  klass.prototype.step = function(dt) {
+    this.position += dt * this.speed * 100
+    if (this.getLeftEdge() > this.window_width) this.position = -(this.width + this.edge_width)
   }
 
-  return Wind
+  klass.prototype.getSpeed = function(x, z) {
+    var left = this.getLeft()
+    var right = this.getRight()
+    if (left < x && x < right) {
+      return this.speed * z
+    } else {
+      return 0
+    }
+
+    return this.speed * z
+  }
+
+  klass.prototype.getLeftEdge = function() {
+    return this.getLeft() - this.edge_width
+  }
+
+  klass.prototype.getRightEdge = function() {
+    return this.getRight() + this.edge_width
+  }
+
+  klass.prototype.getLeft = function() {
+    return this.position - this.width
+  }
+
+  klass.prototype.getRight = function() {
+    return this.position + this.width
+  }
+
+  return klass
 })()
 
