@@ -18,8 +18,10 @@ window.Snow.Renderer = (function() {
 
   (function(klass) {
     klass.prototype.drawSnowFlakes = function() {
-      for (var i = 0; i < this.flakes.length; i++) {
-        this.drawSnowFlake(this.flakes[i])
+      for (var i = this.flakes.length; i--; ) {
+        if (!this.drawSnowFlake(this.flakes[i])) {
+          this.flakes.splice(i, 1)
+        }
       }
     }
 
@@ -43,34 +45,17 @@ window.Snow.Renderer = (function() {
     }
 
     klass.prototype.drawSnowFlake = function(flake) {
-      flake.render()
+      return flake.render({ x: -10, y: -10 }, { x: this.canvas.width + 10, y: this.canvas.height + 10 })
     }
 
     klass.prototype.updateSnowFlakes = function(dt) {
       if (this.wind) this.wind.step(dt)
 
-      var newly_fallen_indices = []
-      for (var i = 0; i < this.flakes.length; i++) {
-        // Flake#step will return true if there's a collision
-        var removed = this.flakes[i].flake.step(dt)
-        if (this.flakes[i].flake.y > this.canvas.height + 50) removed = true
-        if (removed) newly_fallen_indices.push(i)
+      for (var i = this.flakes.length; i--; ) {
+        this.flakes[i].flake.step(dt)
       }
 
-      this.markFlakesAsFallen(newly_fallen_indices)
-      this.fallen_flakes.pruneHiddenFlakes()
-
-      this.addSnowFlakes(Math.random() * 5)
-    }
-
-    // Move the flakes at the passed in indices from the flakes array to the fallen_flakes tracker
-    klass.prototype.markFlakesAsFallen = function(newly_fallen_indices) {
-      var flake_index
-      while (flake_index = newly_fallen_indices.pop()) {
-        var flake = this.flakes[flake_index]
-        this.fallen_flakes.addFlake(flake)
-        this.flakes.splice(this.flakes.indexOf(flake), 1)
-      }
+      this.addSnowFlakes(Math.random() * 2)
     }
 
     klass.prototype.addSnowFlakes = function(new_flake_count) {
@@ -104,10 +89,8 @@ window.Snow.Renderer = (function() {
 
         if (dt > this.frame_length) {
           this.updateSnowFlakes(dt * 0.001)
-          this.fallen_flakes.pruneHiddenFlakes()
           this.clearCanvas()
           this.drawSnowFlakes()
-          this.drawFallenFlakes()
           if (this.debug) this.debug.updateStats(this)
           this.last_draw = now
         }

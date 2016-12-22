@@ -4,7 +4,7 @@ window.Snow.Wind = (function() {
     this.window_width = window_width
     this.width = 600
     this.edge_width = 200
-    this.velocity = { x: speed, y: 0}
+    this.velocity = { x: speed, y: 0 }
   }
 
   klass.prototype.step = function(dt) {
