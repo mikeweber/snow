@@ -9,9 +9,15 @@ window.Snow.SnowFlakeRenderer = (function() {
   (function(klass) {
     klass.prototype.render = function() {
       this.ctx.beginPath()
-      this.ctx.arc(this.flake.x, this.flake.y, this.flake.radius(), 0, 2 * Math.PI, false)
+      var pos3d = this.flake.getPosition()
+      var pos2d = this.convertPos2d(pos3d)
+      this.ctx.arc(pos2d.x, pos2d.y, this.flake.radius() / pos3d.z, 0, 2 * Math.PI, false)
       this.ctx.fillStyle = this.color
       this.ctx.fill()
+    }
+
+    klass.prototype.convertPos2d = function(pos) {
+      return { x: pos.x / pos.z, y: pos.y / pos.z }
     }
   })(FlakeRenderer)
 

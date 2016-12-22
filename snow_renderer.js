@@ -11,6 +11,7 @@ window.Snow.Renderer = (function() {
     // default frame rate to 60 fps
     this.frame_length = options.frame_length || 16
     if (options.wind)    this.wind    = options.wind
+    if (options.gravity) this.gravity = options.gravity
     if (options.debug)   this.debug   = options.debug
     if (options.toggler) this.toggler = new options.toggler(this)
   }
@@ -51,7 +52,7 @@ window.Snow.Renderer = (function() {
       var newly_fallen_indices = []
       for (var i = 0; i < this.flakes.length; i++) {
         // Flake#step will return true if there's a collision
-        var removed = this.flakes[i].flake.step(this.fallen_flakes, dt, this.wind)
+        var removed = this.flakes[i].flake.step(dt)
         if (this.flakes[i].flake.y > this.canvas.height + 50) removed = true
         if (removed) newly_fallen_indices.push(i)
       }
@@ -67,7 +68,7 @@ window.Snow.Renderer = (function() {
       var flake_index
       while (flake_index = newly_fallen_indices.pop()) {
         var flake = this.flakes[flake_index]
-        // this.fallen_flakes.addFlake(flake)
+        this.fallen_flakes.addFlake(flake)
         this.flakes.splice(this.flakes.indexOf(flake), 1)
       }
     }
@@ -87,7 +88,11 @@ window.Snow.Renderer = (function() {
       // so they are removed from the screen at about the same rate that they're added
       var depth = Math.abs(Math.rnd(2, 1))
 
-      return new Snow.SnowFlake(starting_point, 0, depth)
+      var flake = new Snow.SnowFlake(starting_point, 0, depth)
+      flake.appendForce(this.wind)
+      flake.appendForce(this.gravity)
+
+      return flake
     }
 
     klass.prototype.animateScreen = function() {
@@ -103,28 +108,6 @@ window.Snow.Renderer = (function() {
           this.clearCanvas()
           this.drawSnowFlakes()
           this.drawFallenFlakes()
-          // if (this.wind) {
-          //   this.ctx.beginPath()
-          //   this.ctx.moveTo(this.wind.position, 0)
-          //   this.ctx.lineTo(this.wind.position, this.canvas.height)
-          //   this.ctx.lineWidth = 2
-          //   this.ctx.strokeStyle = '#222'
-          //   this.ctx.stroke()
-
-          //   this.ctx.beginPath()
-          //   this.ctx.moveTo(this.wind.getRight(), 0)
-          //   this.ctx.lineTo(this.wind.getRight(), this.canvas.height)
-          //   this.ctx.lineWidth = 2
-          //   this.ctx.strokeStyle = '#222'
-          //   this.ctx.stroke()
-
-          //   this.ctx.beginPath()
-          //   this.ctx.moveTo(this.wind.getRightEdge(), 0)
-          //   this.ctx.lineTo(this.wind.getRightEdge(), this.canvas.height)
-          //   this.ctx.lineWidth = 2
-          //   this.ctx.strokeStyle = '#222'
-          //   this.ctx.stroke()
-          // }
           if (this.debug) this.debug.updateStats(this)
           this.last_draw = now
         }

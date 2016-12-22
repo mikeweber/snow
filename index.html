@@ -26,9 +26,19 @@
     <script type='text/javascript' src='debugger.js'></script>
     <script type='text/javascript' src='toggler.js'></script>
     <script type='text/javascript' src='wind.js'></script>
+    <script type='text/javascript' src='gravity.js'></script>
     <script type='text/javascript' src='snow_renderer.js'></script>
     <script type='text/javascript'>
-      var renderer = new Snow.Renderer(document.getElementById('snow'), window.innerWidth, window.innerHeight, { wind: new Snow.Wind(0, 2, window.innerWidth), debugger: new Snow.SnowDebugger(), toggler: Snow.Toggler })
+      var renderer = new Snow.Renderer(
+        document.getElementById('snow'),
+        window.innerWidth,
+        window.innerHeight, {
+          wind: new Snow.Wind(0, 50, window.innerWidth),
+          gravity: new Snow.Gravity(),
+          debug: new Snow.SnowDebugger(),
+          toggler: Snow.Toggler
+        }
+      )
 
       renderer.animateScreen()
     </script>

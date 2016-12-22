@@ -1,52 +1,85 @@
 window.Snow.SnowFlake = (function() {
   function SnowFlake(x, y, z, options) {
     if (!options) options = {}
-    this.x = x
-    this.y = y
-    this.z = z
-    this.vel_x = 0
-    this.float = options.float || Math.PI * 2 * Math.random()
-    this.is_fallen = false
+    this.x            = x
+    this.y            = y
+    this.z            = z
+    this.velocity     = { x: 0, y: 10 }
+    this.acceleration = { x: 0, y: 0}
+    this.float        = options.float || Math.PI * 2 * Math.random()
+    this.forces       = []
+    this.current_forces = []
+    this.mass         = 0.005
   }
 
   (function(klass) {
-    klass.prototype.step = function(fallen_flakes, dt, wind) {
-      if (this.is_fallen) return
-      // change float first since this is used to calculate velocityY
-      this.float += Math.PI / 20 * dt
-      var delta          = this.calcDelta(fallen_flakes, dt, wind),
-          fall_distance  = delta.y,
-          float_distance = delta.x
-
-      // If the flake has collided, or will collided between the last and the current frame
-      // if (delta.steps_to_snowcover < 1) {
-      //   // check to see if there is actual snow to intersect with before the "ground"
-      //   var collision_flake = this.detectCollision(fallen_flakes, dt, float_distance)
-      //   if (collision_flake.closest_flake) {
-      //     delta.steps_to_snowcover = collision_flake.collision_time
-      //   }
-
-      //   // only fall and float by the percentage of time between the previous and the current frame
-      //   fall_distance  *= delta.steps_to_snowcover
-      //   float_distance *= delta.steps_to_snowcover
-      //   this.is_fallen  = true
-      // }
-
-      this.y += fall_distance
-      this.x += float_distance
-
-      return this.is_fallen
+    klass.prototype.appendForce = function(force) {
+      this.forces.push(force)
     }
 
-    klass.prototype.calcDelta = function(fallen_flakes, dt, wind) {
-      // next determine where it's going to fall in this frame
-      var fall_distance = this.velocityY() * dt,
-          distance_from_snow_cover = (this.y + fall_distance) - fallen_flakes.snowCover(),
-          steps_to_snowcover = (this.velocityY() - distance_from_snow_cover) / this.velocityY(),
-          float_distance = this.stepVelocityX(dt, wind)
+    klass.prototype.step = function(dt) {
+      // change float first since this is used to calculate velocity y
+      this.float += Math.PI / 20 * dt
+      this.applyForces()
+      this.applyAcceleration(dt)
+      var delta = this.calcDelta(dt)
 
-      float_distance += this.z * Math.sin(this.float) * 0.25
-      return { x: float_distance, y: fall_distance, steps_to_snowcover : steps_to_snowcover }
+      this.x += delta.x
+      this.y += delta.y
+      return false
+    }
+
+    klass.prototype.applyForces = function() {
+      this.resetForce()
+      var force
+      for (var i = this.forces.length; i--; ) {
+        force = this.forces[i].applyForce(this)
+        this.current_forces.push(force)
+        this.force.x += force.x
+        this.force.y += force.y
+      }
+    }
+
+    // F = ma
+    // a = F / m
+    klass.prototype.applyAcceleration = function(dt) {
+      this.acceleration.x = this.force.x / this.mass
+      this.acceleration.y = this.force.y / this.mass
+
+      this.velocity.x += this.acceleration.x * dt
+      this.velocity.y -= this.acceleration.y * dt
+    }
+
+    klass.prototype.getPosition = function() {
+      return {
+        x: this.x,
+        y: this.y,
+        z: this.z
+      }
+    }
+
+    klass.prototype.resetForce = function() {
+      this.current_forces = []
+      this.force = { x: 0, y: 0 }
+    }
+
+    klass.prototype.getCoefficient = function() {
+      return 0.5
+    }
+
+    klass.prototype.getSurfaceArea = function() {
+      return 0.00005
+    }
+
+    klass.prototype.getVelocity = function() {
+      return this.velocity
+    }
+
+    klass.prototype.calcDelta = function(dt) {
+      return {
+        x: this.velocity.x * dt,
+        y: this.velocity.y * dt
+      }
     }
 
     klass.prototype.detectCollision = function(fallen_flakes, dt, float_distance) {
@@ -67,18 +100,7 @@ window.Snow.SnowFlake = (function() {
     }
 
     klass.prototype.collisionTimeWith = function(flake, stickiness) {
-      return (2 * -stickiness + flake.y - this.y) / this.velocityY()
-    }
-
-    klass.prototype.stepVelocityX = function(dt, wind) {
-      if (wind) this.vel_x += wind.getSpeed(this.x, this.z) * dt
-      this.vel_x *= 0.99
-
-      return this.vel_x
-    }
-
-    klass.prototype.velocityY = function() {
-      return this.z * 100
+      return (2 * -stickiness + flake.y - this.y) / this.velocity.y
     }
 
     klass.prototype.top = function() {
@@ -86,7 +108,7 @@ window.Snow.SnowFlake = (function() {
     }
 
     klass.prototype.radius = function() {
-      return this.z
+      return 1
     }
   })(SnowFlake)
 
