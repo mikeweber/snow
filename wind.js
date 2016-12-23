@@ -20,7 +20,7 @@ window.Snow.Wind = (function() {
         wind_velocity = this.getVelocity(entity.getPosition())
 
     return {
-      x: this.calcForce(C, p, A, (v.x - wind_velocity.x)),
+      x: this.calcForce(C, p, A, (wind_velocity.x - v.x)),
       y: this.calcForce(C, p, A, (v.y - wind_velocity.y))
     }
   }
@@ -31,7 +31,9 @@ window.Snow.Wind = (function() {
   // A = Cross-section surface area
   // v = velocity
   klass.prototype.calcForce = function(C, p, A, v) {
-    return C * p * A * v * v * 0.5
+    var vel = C * p * A * v * v * 0.5
+    if (v < 0) vel *= -1
+    return vel
   }
 
   klass.prototype.getVelocity = function(pos) {

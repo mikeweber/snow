@@ -8,7 +8,7 @@ window.Snow.Renderer = (function() {
     this.last_draw     = 0
     this.fallen_flakes = new Snow.FallenFlakeTracker(this.canvas.width, this.canvas.height)
     // default frame rate to 60 fps
-    this.frame_length = options.frame_length || 16
+    this.frame_length  = options.frame_length || 16
     if (options.wind)    this.wind    = options.wind
     if (options.gravity) this.gravity = options.gravity
     if (options.debug)   this.debug   = options.debug

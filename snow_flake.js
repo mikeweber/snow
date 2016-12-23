@@ -4,8 +4,8 @@ window.Snow.SnowFlake = (function() {
     this.x            = x
     this.y            = y
     this.z            = z
-    this.velocity     = { x: 0, y: 10 }
-    this.acceleration = { x: 0, y: 0}
+    this.velocity     = { x: 10, y: 62 }
+    this.acceleration = { x: 0, y: 0 }
     this.float        = options.float || Math.PI * 2 * Math.random()
     this.forces       = []
     this.current_forces = []
@@ -64,7 +64,7 @@ window.Snow.SnowFlake = (function() {
     }
 
     klass.prototype.getCoefficient = function() {
-      return 0.5
+      return 0.1
     }
 
     klass.prototype.getSurfaceArea = function() {
