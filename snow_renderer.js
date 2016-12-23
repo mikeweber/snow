@@ -6,7 +6,6 @@ window.Snow.Renderer = (function() {
     this.canvas.width  = width
     this.canvas.height = height
     this.last_draw     = 0
-    this.flakes        = []
     this.fallen_flakes = new Snow.FallenFlakeTracker(this.canvas.width, this.canvas.height)
     // default frame rate to 60 fps
     this.frame_length = options.frame_length || 16
@@ -14,6 +13,7 @@ window.Snow.Renderer = (function() {
     if (options.gravity) this.gravity = options.gravity
     if (options.debug)   this.debug   = options.debug
     if (options.toggler) this.toggler = new options.toggler(this)
+    this.flakes        = this.generateStartingSnowFlake(1000)
   }
 
   (function(klass) {
@@ -69,15 +69,34 @@ window.Snow.Renderer = (function() {
     klass.prototype.generateSnowFlake = function() {
       // Start the snowflake somewhere on the canvas, or just off the edge of either side
       var starting_point = (Math.random() * this.canvas.width * 1.1) - this.canvas.width * 0.05
+      var starting_height = 0
+      if (Math.random() < 0.2) {
+        starting_point  = -10
+        starting_height = Math.random() * this.canvas.height
+      }
       // Add some depth, but for performance reasons, try to keep flakes at a medium depth
       // so they are removed from the screen at about the same rate that they're added
-      var depth = Math.abs(Math.rnd(2, 1))
+      var depth = Math.abs(Math.rnd(1, 0.3))
 
-      var flake = new Snow.SnowFlake(starting_point, 0, depth)
+      var flake = new Snow.SnowFlake(starting_point, starting_height, depth)
       flake.appendForce(this.wind)
       flake.appendForce(this.gravity)
 
       return flake
+    }
+
+    klass.prototype.generateStartingSnowFlake = function(flake_count) {
+      var flakes = []
+      for (var i = 0; i < flake_count; i++) {
+        var start_x = Math.random() * this.canvas.width
+        var start_y = Math.random() * this.canvas.height
+        var depth = Math.abs(Math.rnd(1, 0.3))
+        var flake = new Snow.SnowFlake(start_x, start_y, depth)
+        flake.appendForce(this.wind)
+        flake.appendForce(this.gravity)
+        flakes.push(new Snow.SnowFlakeRenderer(this.ctx, flake))
+      }
+      return flakes
     }
 
     klass.prototype.animateScreen = function() {
