@@ -6,53 +6,40 @@ window.Snow.Renderer = (function() {
     this.canvas.width  = width
     this.canvas.height = height
     this.last_draw     = 0
-    this.fallen_flakes = new Snow.FallenFlakeTracker(this.canvas.width, this.canvas.height)
     // default frame rate to 60 fps
     this.frame_length  = options.frame_length || 16
     if (options.wind)    this.wind    = options.wind
     if (options.gravity) this.gravity = options.gravity
     if (options.debug)   this.debug   = options.debug
     if (options.toggler) this.toggler = new options.toggler(this)
-    this.flakes        = this.generateStartingSnowFlake(1000)
+    this.renderers     = []
+    for (var i = 0; i < 1000; i++) {
+      this.addSnowFlakeRenderer(this.generateStartingSnowFlake(1)[0])
+    }
   }
 
   (function(klass) {
+    klass.prototype.addSnowFlakeRenderer = function(flake) {
+      this.renderers.push(new Snow.SnowFlakeRenderer(this.ctx, flake))
+    }
+
     klass.prototype.drawSnowFlakes = function() {
-      for (var i = this.flakes.length; i--; ) {
-        if (!this.drawSnowFlake(this.flakes[i])) {
-          this.flakes.splice(i, 1)
+      for (var i = this.renderers.length; i--; ) {
+        if (!this.drawSnowFlake(this.renderers[i])) {
+          this.renderers.splice(i, 1)
         }
       }
     }
 
-    klass.prototype.drawFallenFlakes = function() {
-      var flakes = this.fallen_flakes.getAll()
-      for (var i = 0; i < flakes.length; i++) {
-        this.drawSnowFlake(flakes[i])
-      }
-      this.drawSnowCover()
-    }
-
-    klass.prototype.drawSnowCover = function() {
-      this.ctx.fillStyle = '#FFF'
-      var max_height = this.fallen_flakes.snowCover()
-      this.ctx.fillRect(0, max_height, this.canvas.width, this.canvas.height - max_height)
-      // this.ctx.beginPath()
-      // this.ctx.moveTo(0, max_height)
-      // this.ctx.lineTo(this.canvas.width, max_height)
-      // this.ctx.strokeStyle = '#222'
-      // this.ctx.stroke()
-    }
-
-    klass.prototype.drawSnowFlake = function(flake) {
-      return flake.render({ x: -10, y: -10 }, { x: this.canvas.width + 10, y: this.canvas.height + 10 })
+    klass.prototype.drawSnowFlake = function(renderer) {
+      return renderer.render({ x: -10, y: -10 }, { x: this.canvas.width + 10, y: this.canvas.height + 10 })
     }
 
     klass.prototype.updateSnowFlakes = function(dt) {
       if (this.wind) this.wind.step(dt)
 
-      for (var i = this.flakes.length; i--; ) {
-        this.flakes[i].flake.step(dt)
+      for (var i = this.renderers.length; i--; ) {
+        this.renderers[i].step(dt)
       }
 
       this.addSnowFlakes(Math.random() * 2)
@@ -63,13 +50,13 @@ window.Snow.Renderer = (function() {
     }
 
     klass.prototype.addSnowFlake = function() {
-      this.flakes.push(new Snow.SnowFlakeRenderer(this.ctx, this.generateSnowFlake()))
+      this.addSnowFlakeRenderer(this.generateSnowFlake())
     }
 
     klass.prototype.generateSnowFlake = function() {
       // Start the snowflake somewhere on the canvas, or just off the edge of either side
       var starting_point = (Math.random() * this.canvas.width * 1.1) - this.canvas.width * 0.05
-      var starting_height = 0
+      var starting_height = this.canvas.height
       if (Math.random() < 0.2) {
         starting_point  = -10
         starting_height = Math.random() * this.canvas.height
@@ -77,12 +64,7 @@ window.Snow.Renderer = (function() {
       // Add some depth, but for performance reasons, try to keep flakes at a medium depth
       // so they are removed from the screen at about the same rate that they're added
       var depth = Math.abs(Math.rnd(1, 0.3))
-
-      var flake = new Snow.SnowFlake(starting_point, starting_height, depth)
-      flake.appendForce(this.wind)
-      flake.appendForce(this.gravity)
-
-      return flake
+      return this.createSnowFlake(starting_point, starting_height, depth)
     }
 
     klass.prototype.generateStartingSnowFlake = function(flake_count) {
@@ -91,12 +73,17 @@ window.Snow.Renderer = (function() {
         var start_x = Math.random() * this.canvas.width
         var start_y = Math.random() * this.canvas.height
         var depth = Math.abs(Math.rnd(1, 0.3))
-        var flake = new Snow.SnowFlake(start_x, start_y, depth)
-        flake.appendForce(this.wind)
-        flake.appendForce(this.gravity)
-        flakes.push(new Snow.SnowFlakeRenderer(this.ctx, flake))
+        flakes.push(this.createSnowFlake(start_x, start_y, depth))
       }
       return flakes
+    }
+
+    klass.prototype.createSnowFlake = function(x, y, z) {
+      var flake = new Snow.SnowFlake(x, y, z)
+      flake.appendForce(this.wind)
+      flake.appendForce(this.gravity)
+
+      return flake
     }
 
     klass.prototype.animateScreen = function() {

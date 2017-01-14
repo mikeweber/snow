@@ -5,20 +5,13 @@ window.Snow.SnowDebugger = (function() {
     this.nodes = {}
 
     this.addTracker('Flake Size', updateFlakeLength)
-    this.addTracker('Fallen Flake Size', updateFallenFlakeLength)
     this.addTracker('FPS', updateFPS)
-    this.addTracker('Snow Cover', updateMinHeight)
-    this.addTracker('Flakes by Y', updateFlakesByY)
 
     document.body.appendChild(this.def_list)
   }
 
   function updateFlakeLength(node, renderer) {
-    node.innerHTML = renderer.flakes.length
-  }
-
-  function updateFallenFlakeLength(node, renderer) {
-    node.innerHTML = renderer.fallen_flakes.length
+    node.innerHTML = renderer.renderers.length
   }
 
   function updateFPS(node, renderer) {
@@ -34,18 +27,6 @@ window.Snow.SnowDebugger = (function() {
     }
 
     return this.weighted_dt
-  }
-
-  function updateMinHeight(node, renderer) {
-    node.innerHTML = renderer.fallen_flakes.snowCover()
-  }
-
-  function updateFlakesByY(node, renderer) {
-    var output = ''
-    for (var key in renderer.fallen_flakes.flakes_by_y) {
-      output += '' + key + ': ' + renderer.fallen_flakes.flakes_by_y[key].length + ',<br/>'
-    }
-    node.innerHTML = output
   }
 
   (function(klass) {

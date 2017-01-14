@@ -1,7 +1,7 @@
 window.Snow.Toggler = (function() {
   function Toggler(renderer) {
     this.running = true
-    this.renderButton()
+    // this.renderButton()
     this.setButtonText(this.button)
     this.startObservers()
     this.renderer = renderer
@@ -15,12 +15,12 @@ window.Snow.Toggler = (function() {
     }
 
     klass.prototype.setButtonText = function(button) {
-      button.innerHTML = (this.running ? 'Stop' : 'Start')
+      if (this.button) button.innerHTML = (this.running ? 'Stop' : 'Start')
     }
 
     klass.prototype.startObservers = function() {
       document.addEventListener('keydown', function(e) {
-        if (e.code === 'Space') {
+        if (e.code === 'Space' || e.code == 'Escape') {
           this.toggle(this.button)
         }
       }.bind(this))

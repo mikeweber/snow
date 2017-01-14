@@ -1,15 +1,17 @@
 window.Snow.SnowFlake = (function() {
   function SnowFlake(x, y, z, options) {
     if (!options) options = {}
-    this.x            = x
-    this.y            = y
-    this.z            = z
-    this.velocity     = { x: 10, y: 62 }
-    this.acceleration = { x: 0, y: 0 }
-    this.float        = options.float || Math.PI * 2 * Math.random()
-    this.forces       = []
-    this.current_forces = []
-    this.mass         = 0.005
+    this.x             = x
+    this.y             = y
+    this.z             = z
+    this.velocity      = { x: 10, y: -62 }
+    this.acceleration  = { x: 0, y: 0 }
+    this.theta         = 2 * Math.PI * Math.random() // angular displacement
+    this.omega         = 1 // angular velocity
+    this.alpha         = 0 // angular acceleration
+    this.forces        = []
+    this.active_forces = []
+    this.mass          = 0.003
   }
 
   (function(klass) {
@@ -18,14 +20,13 @@ window.Snow.SnowFlake = (function() {
     }
 
     klass.prototype.step = function(dt) {
-      // change float first since this is used to calculate velocity y
-      this.float += Math.PI / 20 * dt
       this.applyForces()
       this.applyAcceleration(dt)
       var delta = this.calcDelta(dt)
 
-      this.x += delta.x
-      this.y += delta.y
+      this.x     += delta.x
+      this.y     += delta.y
+      this.theta += delta.theta
       return false
     }
 
@@ -34,20 +35,29 @@ window.Snow.SnowFlake = (function() {
       var force
       for (var i = this.forces.length; i--; ) {
         force = this.forces[i].applyForce(this)
-        this.current_forces.push(force)
-        this.force.x += force.x
-        this.force.y += force.y
+        this.active_forces.push(force)
+      }
+
+      for (var i = this.active_forces.length; i--; ) {
+        this.force.x += this.active_forces[i].x
+        this.force.y += this.active_forces[i].y
+        if (this.active_forces[i].T) this.force.T += this.active_forces[i].T
       }
     }
 
     // F = ma
     // a = F / m
+    // I = moment of inertia (for snowflake spinning around its center) = 1 / 12 * (m * r ^ 2)
+    // alpha = Angular acceleration = T / I
     klass.prototype.applyAcceleration = function(dt) {
       this.acceleration.x = this.force.x / this.mass
       this.acceleration.y = this.force.y / this.mass
+      var I = this.mass * this.radius() ** 2 / 12
+      this.alpha += this.force.T / I
 
       this.velocity.x += this.acceleration.x * dt
-      this.velocity.y -= this.acceleration.y * dt
+      this.velocity.y += this.acceleration.y * dt
+      this.omega += this.alpha * dt
     }
 
     klass.prototype.getPosition = function() {
@@ -59,8 +69,8 @@ window.Snow.SnowFlake = (function() {
     }
 
     klass.prototype.resetForce = function() {
-      this.current_forces = []
-      this.force = { x: 0, y: 0 }
+      this.active_forces = []
+      this.force = { x: 0, y: 0, T: 0 }
     }
 
     klass.prototype.getCoefficient = function() {
@@ -68,7 +78,7 @@ window.Snow.SnowFlake = (function() {
     }
 
     klass.prototype.getSurfaceArea = function() {
-      return 0.00005
+      return 0.0007
     }
 
     klass.prototype.getVelocity = function() {
@@ -77,8 +87,9 @@ window.Snow.SnowFlake = (function() {
 
     klass.prototype.calcDelta = function(dt) {
       return {
-        x: this.velocity.x * dt,
-        y: this.velocity.y * dt
+        x:     this.velocity.x * dt,
+        y:     this.velocity.y * dt,
+        theta: this.omega * dt
       }
     }
 

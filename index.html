@@ -18,6 +18,7 @@
   <body style="background: #AAA">
     <canvas id="snow" style="width=1000px;height=800px"></canvas>
 
+    <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.8.1/math.js'></script>
     <script type='text/javascript' src='utils.js'></script>
     <script type='text/javascript' src='snow_namespace.js'></script>
     <script type='text/javascript' src='fallen_flake_tracker.js'></script>
@@ -33,7 +34,7 @@
         document.getElementById('snow'),
         window.innerWidth,
         window.innerHeight, {
-          wind: new Snow.Wind(0, 350, window.innerWidth),
+          wind: new Snow.Wind(0, 20, window.innerWidth),
           gravity: new Snow.Gravity(),
           debug: new Snow.SnowDebugger(),
           toggler: Snow.Toggler

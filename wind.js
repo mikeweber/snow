@@ -19,9 +19,18 @@ window.Snow.Wind = (function() {
         v = entity.getVelocity(),
         wind_velocity = this.getVelocity(entity.getPosition())
 
+
+    var Fx = this.calcForce(C, p, A * Math.abs(Math.sin(entity.theta)), (wind_velocity.x - v.x))
+    var Fy = this.calcForce(C, p, A * Math.abs(Math.cos(entity.theta)), (wind_velocity.y - v.y))
+    // Now that we know the X and Y forces, also apply a tangential force that may lift or push down the snow flak
+    // Fy += Math.sin(entity.theta - Math.PI) * Fx
+    // Fx += Math.abs(Math.cos(entity.theta - Math.PI)) * Fy
+    var T = 0
+
     return {
-      x: this.calcForce(C, p, A, (wind_velocity.x - v.x)),
-      y: this.calcForce(C, p, A, (v.y - wind_velocity.y))
+      x: Fx,
+      y: Fy,
+      T: T
     }
   }
 
@@ -31,17 +40,26 @@ window.Snow.Wind = (function() {
   // A = Cross-section surface area
   // v = velocity
   klass.prototype.calcForce = function(C, p, A, v) {
-    var vel = C * p * A * v * v * 0.5
-    if (v < 0) vel *= -1
-    return vel
+    return C * p * A * v * v * 0.5
+  }
+
+  // T = torque = F * r
+  klass.prototype.calcRotationalForce = function(radius, theta, mass, x_force, y_force) {
+    // cos(theta) * radius == leverage of wind in x axis
+    // sin(theta - 90º) == x-axis leverage that is perpendicular to lever
+    // sin(theta) * radius == leverage of wind in y axis
+    //
+    var I  = mass * radius ** 2 / 12
+    var Tx = x_force * radius * Math.cos(theta) * Math.sin(theta - Math.PI / 2)
+    var Ty = y_force * radius * Math.sin()
   }
 
   klass.prototype.getVelocity = function(pos) {
-    if (this.getLeft() < pos.x && pos.x < this.getRight()) {
+    //if (this.getLeft() < pos.x && pos.x < this.getRight()) {
       return this.velocity
-    } else {
-      return { x: 0, y: 0 }
-    }
+    //} else {
+      //return { x: 0, y: 0 }
+    //}
   }
 
   klass.prototype.getLeftEdge = function() {
