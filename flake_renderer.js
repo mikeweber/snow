@@ -7,31 +7,24 @@ window.Snow.SnowFlakeRenderer = (function() {
   }
 
   (function(klass) {
-    klass.prototype.render = function(min, max) {
+    klass.prototype.render = function(camera, min, max) {
       var pos3d = this.flake.getPosition()
       pos3d.y = (max.y + min.y) - pos3d.y
       var pos2d = this.convertPos2d(pos3d)
+      var matrix_pos2d = camera.project(pos3d)
       if ((min.x > pos2d.x || max.y < pos2d.x) && (min.y > pos2d.y || max.y < pos2d.y)) return false
 
+      matrix_pos2d.z = pos3d.z
+      this.draw(matrix_pos2d, this.color)
+      return true
+    }
+
+    klass.prototype.draw = function(pos, color) {
       this.ctx.beginPath()
-      this.ctx.strokeStyle = '#FF0000'
-      this.ctx.arc(pos2d.x, pos2d.y, this.flake.radius() / pos3d.z, 0, 2 * Math.PI, false)
-      this.ctx.fillStyle = this.color
+      this.ctx.arc(pos.x, pos.y, this.flake.radius() / Math.abs(pos.z), 0, 2 * Math.PI, false)
+      this.ctx.fillStyle = color
       this.ctx.fill()
       this.ctx.closePath()
-//       this.ctx.stroke()
-// 
-//       this.ctx.beginPath()
-//       var topleft_x     = Math.cos(this.flake.theta) * this.flake.radius() / pos3d.z + pos2d.x
-//       var topleft_y     = Math.sin(this.flake.theta) * this.flake.radius() / pos3d.z + pos2d.y
-//       var bottomright_x = Math.cos(this.flake.theta + Math.PI) * this.flake.radius() / pos3d.z + pos2d.x
-//       var bottomright_y = Math.sin(this.flake.theta + Math.PI) * this.flake.radius() / pos3d.z + pos2d.y
-//       this.ctx.moveTo(topleft_x, topleft_y)
-//       this.ctx.lineTo(bottomright_x, bottomright_y)
-//       this.ctx.strokeStyle = this.color
-//       this.ctx.lineWidth = pos3d.z
-//       this.ctx.closePath()
-//       this.ctx.stroke()
 
       return true
     }
@@ -41,7 +34,7 @@ window.Snow.SnowFlakeRenderer = (function() {
     }
 
     klass.prototype.convertPos2d = function(pos) {
-      return { x: pos.x / pos.z, y: pos.y / pos.z }
+      return { x: pos.x / pos.z, y: pos.y / pos.z, z: pos.z }
     }
   })(FlakeRenderer)
 

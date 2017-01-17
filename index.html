@@ -21,6 +21,7 @@
     <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.8.1/math.js'></script>
     <script type='text/javascript' src='utils.js'></script>
     <script type='text/javascript' src='snow_namespace.js'></script>
+    <script type='text/javascript' src='camera.js'></script>
     <script type='text/javascript' src='fallen_flake_tracker.js'></script>
     <script type='text/javascript' src='snow_flake.js'></script>
     <script type='text/javascript' src='flake_renderer.js'></script>
@@ -30,11 +31,15 @@
     <script type='text/javascript' src='gravity.js'></script>
     <script type='text/javascript' src='snow_renderer.js'></script>
     <script type='text/javascript'>
+      var width  = window.innerWidth
+      var height = window.innerHeight
       var renderer = new Snow.Renderer(
         document.getElementById('snow'),
-        window.innerWidth,
-        window.innerHeight, {
-          wind: new Snow.Wind(0, 20, window.innerWidth),
+        width,
+        height,
+        new Snow.Camera([0, 0, 0], [0, 0, -1]),
+        {
+          wind: new Snow.Wind(0, 20, width),
           gravity: new Snow.Gravity(),
           debug: new Snow.SnowDebugger(),
           toggler: Snow.Toggler
