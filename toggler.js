@@ -23,6 +23,26 @@ window.Snow.Toggler = (function() {
         if (e.code === 'Space' || e.code == 'Escape') {
           this.toggle(this.button)
         }
+        if (e.code === 'ArrowRight') {
+          if (e.shiftKey) {
+            this.renderer.camera.moveRight(1)
+          } else {
+            this.renderer.camera.rotateCamera(1)
+          }
+        }
+        if (e.code === 'ArrowLeft') {
+          if (e.shiftKey) {
+            this.renderer.camera.moveLeft(1)
+          } else {
+            this.renderer.camera.rotateCamera(-1)
+          }
+        }
+        if (e.code === 'ArrowUp') {
+          this.renderer.camera.zoom(-1)
+        }
+        if (e.code === 'ArrowDown') {
+          this.renderer.camera.zoom(1)
+        }
       }.bind(this))
     }
 

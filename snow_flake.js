@@ -10,7 +10,7 @@ window.Snow.SnowFlake = (function() {
     this.omega         = 1 // angular velocity
     this.alpha         = 0 // angular acceleration
     this.forces        = []
-    this.active_forces = []
+    this.resetForce()
     this.mass          = 0.003
   }
 

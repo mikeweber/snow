@@ -14,14 +14,20 @@ window.Snow.Renderer = (function() {
     if (options.debug)   this.debug   = options.debug
     if (options.toggler) this.toggler = new options.toggler(this)
     this.renderers     = []
+    // this.addSnowFlakeRenderer(this.createSnowFlake(0,  0, 0), { color: '#FF0000' })
+    // this.addSnowFlakeRenderer(this.createSnowFlake(0, -10, 0), { color: '#00FF00' })
+    // this.addSnowFlakeRenderer(this.createSnowFlake(1,  0, 0), { color: '#FFFFFF' })
+    // this.addSnowFlakeRenderer(this.createSnowFlake(1,  1, 0), { color: '#0000FF' })
+    // this.addSnowFlakeRenderer(this.createSnowFlake(1,  1, 5), { color: '#FFFFFF' })
+    // this.addSnowFlakeRenderer(this.createSnowFlake(0.9,0.9,0.9), { color: '#FF00FF' })
     for (var i = 0; i < 1000; i++) {
       this.addSnowFlakeRenderer(this.generateStartingSnowFlake(1)[0])
     }
   }
 
   (function(klass) {
-    klass.prototype.addSnowFlakeRenderer = function(flake) {
-      this.renderers.push(new Snow.SnowFlakeRenderer(this.ctx, flake))
+    klass.prototype.addSnowFlakeRenderer = function(flake, options) {
+      this.renderers.push(new Snow.SnowFlakeRenderer(this.ctx, flake, options))
     }
 
     klass.prototype.drawSnowFlakes = function(camera) {
@@ -33,7 +39,7 @@ window.Snow.Renderer = (function() {
     }
 
     klass.prototype.drawSnowFlake = function(camera, renderer) {
-      return renderer.render(camera, { x: -10, y: -10 }, { x: this.canvas.width + 10, y: this.canvas.height + 10 })
+      return renderer.render(camera)
     }
 
     klass.prototype.updateSnowFlakes = function(dt) {
